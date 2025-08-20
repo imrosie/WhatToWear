@@ -7,9 +7,10 @@ A prototype of a web application that recommends outfits based on real-time weat
 * Provides outfit recommendations based on temperature.
 * Offers additional suggestions for rainy or windy weather.
 * Integrates with an external weather API to fetch real-time data.
+* Provides hourly weather forecasts for up to one week ahead.
 
 ### Logic (Algorithm)
-1. The app requests the user's location.
+1. The app requests the user's location and the specific date/time for which they need a recommendation.
 2. Weather data (temperature, wind speed, rain probability) is retrieved from an API.
 3. Based on the data, the app analyzes the conditions and provides a recommendation.
    * If there is a possibility of rain and/or strong wind, it will give a warning.
