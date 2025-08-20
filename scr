@@ -1,0 +1,223 @@
+!pip install requests
+import requests
+import json
+from datetime import datetime, timedelta
+
+ # Fetching Weather Data from API
+ def get_coordinates(city_name):
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={city_name}&count=1&language=en&format=json"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'results' in data and len(data['results']) > 0:
+            result = data['results'][0]
+            latitude = result['latitude']
+            longitude = result['longitude']
+            return latitude, longitude
+        else:
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching coordinates: {e}")
+        return None, None
+
+def get_weather_forecast(latitude, longitude):
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&hourly=temperature_2m,relative_humidity_2m,windspeed_10m,weathercode&forecast_days=7&timezone=auto"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'hourly' in data:
+            return data['hourly']
+        else:
+            return None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather data: {e}")
+        return None
+
+# Data Processing and Analysis
+def translate_weather_code(code):
+
+    weather_codes = {
+        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+        45: "Fog", 48: "Depositing rime fog", 51: "Light drizzle", 53: "Moderate drizzle",
+        55: "Dense drizzle", 61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+        80: "Slight rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+        95: "Thunderstorm", 96: "Thunderstorm with slight hail",
+        99: "Thunderstorm with heavy hail"
+    }
+    return weather_codes.get(code, "Unknown")
+
+def calculate_heat_index(temp_celsius, humidity):
+
+    # Convert Celsius to Fahrenheit
+    temp_fahrenheit = (temp_celsius * 9/5) + 32
+
+    # Use the official NWS simplified heat index formula
+    T = temp_fahrenheit
+    R = humidity
+
+    # Constants for the NWS formula
+    c1 = -42.379
+    c2 = 2.04901523
+    c3 = 10.14333127
+    c4 = -0.22475541
+    c5 = -0.00683783
+    c6 = -0.05481717
+    c7 = 0.00122874
+    c8 = 0.00085282
+    c9 = -0.00000199
+
+    # Calculate heat index in Fahrenheit
+    heat_index_f = c1 + c2*T + c3*R + c4*T*R + c5*T**2 + c6*R**2 + c7*T**2*R + c8*T*R**2 + c9*T**2*R**2
+
+    # Convert the result back to Celsius
+    heat_index_celsius = (heat_index_f - 32) * 5/9
+
+    return heat_index_celsius
+
+day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+def analyze_and_filter_forecast(forecast_data, day_name, start_hour, end_hour):
+
+    temp_max = -999
+    temp_min = 999
+    total_heat_index = 0
+    hour_count = 0
+    is_rainy = False
+    is_windy = False
+
+    today = datetime.now().date()
+    target_date = None
+
+    for i in range(7):
+        current_date = today + timedelta(days=i)
+        if day_names[current_date.weekday()] == day_name.lower():
+            target_date = current_date
+            break
+
+    if not target_date:
+        return None
+
+    start_time_of_day = datetime.combine(target_date, datetime.min.time()).replace(hour=start_hour)
+    end_time_of_day = datetime.combine(target_date, datetime.min.time()).replace(hour=end_hour)
+
+    for i in range(len(forecast_data['time'])):
+        time_str = forecast_data['time'][i]
+        time_obj = datetime.fromisoformat(time_str)
+
+        if time_obj.date() == target_date and start_time_of_day <= time_obj < end_time_of_day:
+            temp = forecast_data['temperature_2m'][i]
+            humidity = forecast_data['relative_humidity_2m'][i]
+            wind_speed = forecast_data['windspeed_10m'][i]
+            weather_code = forecast_data['weathercode'][i]
+
+            if temp > temp_max:
+                temp_max = temp
+            if temp < temp_min:
+                temp_min = temp
+
+            heat_index = calculate_heat_index(temp, humidity)
+            total_heat_index += heat_index
+            hour_count += 1
+
+            if weather_code >= 51:
+                is_rainy = True
+
+            if wind_speed > 20:
+                is_windy = True
+
+    average_heat_index = total_heat_index / hour_count if hour_count > 0 else None
+
+    return {
+        'temp_min': temp_min,
+        'temp_max': temp_max,
+        'avg_heat_index': average_heat_index,
+        'is_rainy': is_rainy,
+        'is_windy': is_windy
+    }
+
+# Generating Outfit Recommendations
+def generate_outfit_recommendation(average_heat_index, is_rainy, is_windy):
+
+    recommendation = ""
+
+    if average_heat_index is None:
+        return "No weather data available for the specified time range to generate a recommendation."
+
+    if average_heat_index > 32:
+        recommendation += "It will be very hot, so wear thin and breathable clothing."
+    elif average_heat_index >= 20 and average_heat_index <= 32:
+        recommendation += "It will be warm, so light clothes should be comfortable."
+    elif average_heat_index >=5 and average_heat_index <= 20:
+        recommendation += "It might be cool, so consider wearing a light jacket or sweater."
+    elif average_heat_index <5:
+        recommendation += "`It will be freezing, so opt for warm, insulated layers, and protective accessories.`"
+
+    if is_rainy:
+        if is_windy:
+            recommendation += "It's likely to rain and windy, so don't forget a raincoat. "
+        else:
+            recommendation += "It's likely to rain, so don't forget an umbrella or a raincoat. "
+    else:
+        recommendation += "The weather seems clear with no rain expected. "
+
+    if is_windy:
+        recommendation += "The wind will be strong, so wear something that won't blow around. "
+
+    return recommendation
+
+# main code
+city_name = input("Enter a city name: ")
+day_name_input = input("Enter the day (e.g., Monday, Tuesday): ").lower()
+start_hour_input = input("Enter the start hour (0-23): ")
+end_hour_input = input("Enter the end hour (0-23): ")
+
+try:
+    start_hour = int(start_hour_input)
+    end_hour = int(end_hour_input)
+    if not (0 <= start_hour <= 23 and 0 <= end_hour <= 23):
+        raise ValueError("Hours must be between 0 and 23.")
+except ValueError as e:
+    print(f"Invalid input: {e}")
+    exit()
+
+lat, lon = get_coordinates(city_name)
+
+if lat is not None and lon is not None:
+    forecast_data = get_weather_forecast(lat, lon)
+
+    if forecast_data:
+        analyzed_data = analyze_and_filter_forecast(forecast_data, day_name_input, start_hour, end_hour)
+
+        if analyzed_data:
+            recommendation_text = generate_outfit_recommendation(
+                analyzed_data['avg_heat_index'],
+                analyzed_data['is_rainy'],
+                analyzed_data['is_windy']
+            )
+
+            print(f"\n--- Weather Summary for {city_name} on {day_name_input.capitalize()} ({start_hour}:00 - {end_hour}:00) ---")
+            print(f"Lowest Temperature: {analyzed_data['temp_min']:.1f}°C")
+            print(f"Highest Temperature: {analyzed_data['temp_max']:.1f}°C")
+
+            if analyzed_data['avg_heat_index'] is not None:
+                print(f"Average Heat Index: {analyzed_data['avg_heat_index']:.1f}°C")
+
+            print(f"Chance of Rain: {'Yes' if analyzed_data['is_rainy'] else 'No'}")
+            print(f"Chance of High Winds: {'Yes' if analyzed_data['is_windy'] else 'No'}")
+
+            print("\nOutfit Recommendation:")
+            print(recommendation_text)
+        else:
+            print(f"Could not find forecast data for {day_name_input}.")
+    else:
+        print("Failed to get forecast data.")
+else:
+    print("Could not find coordinates for the city.")
