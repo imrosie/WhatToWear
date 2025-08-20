@@ -24,5 +24,5 @@ A prototype of a web application that recommends outfits based on real-time weat
 ![Flowchart System](flowchart.drawio.png)
 
 ### Technologies Used
-Python: The core logic of the application, including data processing and recommendation algorithm.
-Open-Meteo API: For fetching real-time weather data.
+* Python: The core logic of the application, including data processing and recommendation algorithm.
+* Open-Meteo API: For fetching real-time weather data.
