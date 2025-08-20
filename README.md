@@ -4,7 +4,7 @@ A prototype of a web application that recommends outfits based on real-time weat
 **Ever picked the wrong outfit and regretted it when the weather changed unexpectedly? This is a simple prototype designed to provide outfit recommendations based on the current weather conditions. The goal is to help users be prepared and confident in their daily attire.**
 
 ### Features
-* Provides outfit recommendations based on temperature.
+* Provides outfit recommendations based on average heat index*.
 * Offers additional suggestions for rainy or windy weather.
 * Integrates with an external weather API to fetch real-time data.
 * Provides hourly weather forecasts for up to one week ahead.
@@ -20,6 +20,7 @@ A prototype of a web application that recommends outfits based on real-time weat
       * Between 5°C - 25°C: Suggests wearing a jacket or sweater.
       * Below 5°C: Recommends wearing warm, insulated layers and accessories like a scarf and gloves.
 ![Flowchart System](flowchart.drawio.png)
+*The heat index is a measure that combines air temperature and relative humidity to determine the perceived temperature, indicating how hot it feels to the human body.
 
 ### Technologies Used
 Python: The core logic of the application, including data processing and recommendation algorithm.
