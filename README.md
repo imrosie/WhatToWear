@@ -19,4 +19,4 @@ A prototype of a web application that recommends outfits based on real-time weat
       * Between 5°C - 25°C: Suggests wearing a jacket or sweater.
       * Below 5°C: Recommends wearing warm, insulated layers and accessories like a scarf and gloves.
 
-![Flowchart System](images/flowchart.drawio.png)
+![Flowchart System](flowchart.drawio.png)
