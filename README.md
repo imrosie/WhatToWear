@@ -8,6 +8,7 @@ A prototype of a web application that recommends outfits based on real-time weat
 * Offers additional suggestions for rainy or windy weather.
 * Integrates with an external weather API to fetch real-time data.
 * Provides hourly weather forecasts for up to one week ahead.
+
 *The heat index is a measure that combines air temperature and relative humidity to determine the perceived temperature, indicating how hot it feels to the human body.
 
 ### Logic (Algorithm)
