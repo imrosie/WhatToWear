@@ -19,7 +19,8 @@ A prototype of a web application that recommends outfits based on real-time weat
       * Between 25°C - 32°C: Recommends light, comfortable clothes.
       * Between 5°C - 25°C: Suggests wearing a jacket or sweater.
       * Below 5°C: Recommends wearing warm, insulated layers and accessories like a scarf and gloves.
-
-
-
 ![Flowchart System](flowchart.drawio.png)
+
+### Technologies Used
+Python: The core logic of the application, including data processing and recommendation algorithm.
+Open-Meteo API: For fetching real-time weather data.
